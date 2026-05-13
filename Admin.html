@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>لوحة التحكم — عيادة</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .topbar h1 {
+            font-size: 1.25rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .topbar-actions .user-pill {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.35rem 0.85rem;
+        }
+        .btn {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        .btn:hover { background: var(--surface-2); }
+        .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .btn-danger:hover { filter: brightness(0.92); }
+        .btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+        .btn-warning { background: var(--warning); color: #fff; border-color: var(--warning); }
+        .btn-sm { padding: 0.3rem 0.65rem; font-size: 0.82rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+
+        /* Login gate */
+        .login-card {
+            max-width: 380px;
+            margin: 6rem auto;
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .login-card h2 { margin: 0 0 1rem; }
+        .login-card label { display: block; margin-bottom: 0.85rem; font-size: 0.9rem; color: var(--text-muted); }
+        .login-card input {
+            display: block;
+            width: 100%;
+            padding: 0.6rem 0.85rem;
+            margin-top: 0.3rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .login-hint {
+            margin-top: 1rem;
+            padding: 0.7rem 0.85rem;
+            background: var(--surface-2);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .login-error {
+            color: var(--danger);
+            margin: 0.5rem 0;
+            font-size: 0.88rem;
+            min-height: 1.2em;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.15rem;
+            box-shadow: var(--shadow);
+        }
+        .stat-label { color: var(--text-muted); font-size: 0.82rem; }
+        .stat-value { font-size: 1.85rem; font-weight: 700; margin-top: 0.25rem; }
+        .stat-accent-primary { color: var(--primary); }
+        .stat-accent-warning { color: var(--warning); }
+        .stat-accent-success { color: var(--success); }
+        .stat-accent-danger  { color: var(--danger); }
+
+        /* Two-column layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.25rem;
+        }
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .panel-body { padding: 0.5rem; }
+
+        /* Doctors list */
+        .doctor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.7rem 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.12s;
+            gap: 0.5rem;
+        }
+        .doctor-item:hover { background: var(--surface-2); }
+        .doctor-item.active {
+            background: #eff6ff;
+            border-color: var(--primary);
+        }
+        .doctor-item-info { flex: 1; min-width: 0; }
+        .doctor-item-name { font-weight: 600; font-size: 0.95rem; }
+        .doctor-item-specialty {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doctor-item-count {
+            background: var(--primary);
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            min-width: 28px;
+            text-align: center;
+        }
+        .doctor-item-count.zero { background: var(--text-muted); opacity: 0.6; }
+        .doctor-item-count.has-active::after {
+            content: ' • ' attr(data-active) ' نشط';
+            font-weight: 500;
+            font-size: 0.78rem;
+            opacity: 0.95;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+        .filters select, .filters input {
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text);
+        }
+        .filters input { flex: 1; min-width: 180px; }
+
+        /* Bookings table */
+        .table-wrap { overflow-x: auto; }
+        table.bookings {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+        table.bookings th, table.bookings td {
+            text-align: right;
+            padding: 0.7rem 0.85rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+            vertical-align: top;
+        }
+        table.bookings th {
+            background: var(--surface-2);
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-transform: none;
+        }
+        table.bookings tr:last-child td { border-bottom: none; }
+        table.bookings tbody tr:hover { background: var(--surface-2); }
+
+        .pill {
+            display: inline-block;
+            padding: 0.18rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .pill-pending   { background: #fef3c7; color: #92400e; }
+        .pill-confirmed { background: #dbeafe; color: #1e40af; }
+        .pill-completed { background: #dcfce7; color: #166534; }
+        .pill-cancelled { background: #fee2e2; color: #991b1b; text-decoration: line-through; }
+
+        .svc-tag {
+            display: inline-block;
+            padding: 0.12rem 0.5rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: var(--text);
+        }
+
+        .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+        .empty, .loading {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: #fff;
+            padding: 0.7rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+        .toast-error { background: var(--danger); }
+        .toast-success { background: var(--success); }
+
+        .small-muted { color: var(--text-muted); font-size: 0.82rem; }
+    </style>
+</head>
+<body>
+
+<!-- Login gate -->
+<div id="loginGate">
+    <div class="login-card">
+        <h2>🏥 لوحة التحكم</h2>
+        <p class="small-muted">يرجى تسجيل الدخول بحساب المدير.</p>
+        <form id="adminLoginForm">
+            <label>البريد الإلكتروني / الهاتف
+                <input type="text" id="loginId" required autocomplete="username">
+            </label>
+            <label>كلمة المرور
+                <input type="password" id="loginPass" required autocomplete="current-password">
+            </label>
+            <p class="login-error" id="loginError"></p>
+            <button type="submit" class="btn btn-primary" style="width:100%;">تسجيل الدخول</button>
+            <button type="button" class="btn" id="bootstrapBtn"
+                style="width:100%;margin-top:0.5rem;display:none;">
+                ترقية هذا الحساب لمدير (مرة واحدة فقط)
+            </button>
+        </form>
+        <div class="login-hint">
+            <strong>الحساب الافتراضي:</strong><br>
+            البريد: <code>admin@nofer.local</code><br>
+            كلمة المرور: <code>admin123</code>
+            <br><br>
+            <span class="small-muted">إذا لم يعمل الحساب الافتراضي، سجّل دخول بأي حساب ثم اضغط
+            "ترقية هذا الحساب لمدير" (يعمل فقط إذا لم يوجد أي مدير بعد).</span>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none;">
+    <div class="topbar">
+        <h1>🏥 لوحة التحكم — عيادة</h1>
+        <div class="topbar-actions">
+            <span class="user-pill" id="adminPill"></span>
+            <a href="index.html" class="btn">← الموقع الرئيسي</a>
+            <button type="button" class="btn" id="logoutBtn">تسجيل خروج</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="layout">
+            <!-- Doctors panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>الأطباء</span>
+                    <span class="small-muted" id="doctorsTotal"></span>
+                </div>
+                <div class="panel-body" id="doctorsList">
+                    <div class="loading">جاري التحميل...</div>
+                </div>
+            </div>
+
+            <!-- Bookings panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span id="bookingsTitle">جميع الحجوزات</span>
+                    <button type="button" class="btn btn-sm" id="refreshBookings">⟳ تحديث</button>
+                </div>
+                <div class="filters">
+                    <select id="filterStatus">
+                        <option value="">كل الحالات</option>
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="confirmed">مؤكد</option>
+                        <option value="completed">مكتمل</option>
+                        <option value="cancelled">ملغي</option>
+                    </select>
+                    <select id="filterService">
+                        <option value="">كل أنواع الخدمات</option>
+                        <option value="clinic">كشف بالعيادة</option>
+                        <option value="home_visit">كشف منزلي</option>
+                        <option value="video">استشارة فيديو</option>
+                        <option value="chat">استشارة شات</option>
+                    </select>
+                    <input type="search" id="filterSearch" placeholder="ابحث باسم المريض أو الهاتف...">
+                </div>
+                <div class="table-wrap" id="bookingsWrap">
+                    <div class="loading">جاري التحميل...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const API_BASE = './backend.php';
+const TOKEN_KEY = 'nofer_token';
+const USER_KEY  = 'nofer_user';
+
+const STATUS_LABELS = {
+    pending:   'قيد الانتظار',
+    confirmed: 'مؤكد',
+    completed: 'مكتمل',
+    cancelled: 'ملغي',
+};
+const SERVICE_LABELS = {
+    clinic:     'كشف بالعيادة',
+    home_visit: '🏠 كشف منزلي',
+    video:      '📹 استشارة فيديو',
+    chat:       '💬 استشارة شات',
+};
+const PAYMENT_LABELS = {
+    cash: 'نقدي', visa: 'بطاقة', fawry: 'فوري',
+    paypal: 'PayPal', vodafone_cash: 'فودافون كاش'
+};
+
+// ----- State -----
+let token = null;
+let user  = null;
+let selectedDoctorId = null;        // null = show all
+let doctors = [];
+let bookingsCache = [];
+let filterDebounce = null;
+
+// ----- Helpers -----
+function escapeHTML(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type ? 'toast-' + type : '');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.className = 'toast', 2500);
+}
+function formatDate(s) {
+    if (!s) return '';
+    try {
+        // s is either "YYYY-MM-DD" (booking date) or "YYYY-MM-DD HH:MM:SS" (created_at)
+        if (s.length <= 10) return s;
+        return s.replace(' ', ' • ').slice(0, 16);
+    } catch (_) { return s; }
+}
+
+async function api(path, options = {}) {
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if (res.status === 401) {
+        // session expired
+        signOut(true);
+        throw new Error('Unauthorized');
+    }
+    if (!res.ok || !data.success) {
+        const msg = (data && data.error) || `خطأ ${res.status}`;
+        throw new Error(msg);
+    }
+    return data;
+}
+
+// ----- Auth -----
+function loadStoredAuth() {
+    try {
+        token = localStorage.getItem(TOKEN_KEY);
+        const u = localStorage.getItem(USER_KEY);
+        user = u ? JSON.parse(u) : null;
+    } catch (_) {}
+}
+function storeAuth(t, u) {
+    token = t; user = u;
+    try {
+        localStorage.setItem(TOKEN_KEY, t);
+        localStorage.setItem(USER_KEY, JSON.stringify(u));
+    } catch (_) {}
+}
+async function signOut(silent = false) {
+    try { if (token) await api('/api/logout', { method: 'POST' }); } catch (_) {}
+    token = null; user = null;
+    try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); } catch (_) {}
+    showLogin();
+    if (!silent) showToast('تم تسجيل الخروج');
+}
+
+function showLogin() {
+    document.getElementById('loginGate').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+}
+function showDashboard() {
+    document.getElementById('loginGate').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('adminPill').textContent = user?.name || '';
+    loadStats();
+    loadDoctors();
+    loadBookings();
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const errEl = document.getElementById('loginError');
+    const bootstrapBtn = document.getElementById('bootstrapBtn');
+    errEl.textContent = '';
+    bootstrapBtn.style.display = 'none';
+
+    const identifier = document.getElementById('loginId').value.trim();
+    const password   = document.getElementById('loginPass').value;
+    if (!identifier || !password) { errEl.textContent = 'يرجى ملء جميع الحقول.'; return; }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier, password })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            errEl.textContent = data.error || 'فشل تسجيل الدخول.';
+            return;
+        }
+        if (!data.user.is_admin) {
+            // Store the token so bootstrap call can authenticate, but DON'T
+            // call showDashboard yet — they need to be promoted first.
+            storeAuth(data.token, data.user);
+            errEl.textContent = 'هذا الحساب ليس له صلاحيات مدير.';
+            bootstrapBtn.style.display = 'block';
+            return;
+        }
+        storeAuth(data.token, data.user);
+        showDashboard();
+    } catch (err) {
+        errEl.textContent = 'تعذر الاتصال بالخادم.';
+    }
+}
+
+async function handleBootstrap() {
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('bootstrapBtn');
+    if (!token) { errEl.textContent = 'سجّل الدخول أولاً.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'جاري الترقية...';
+    try {
+        const data = await api('/api/admin/bootstrap', {
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+        // Update stored user
+        user = data.user;
+        try { localStorage.setItem(USER_KEY, JSON.stringify(user)); } catch (_) {}
+        showToast('تمت الترقية بنجاح', 'success');
+        showDashboard();
+    } catch (err) {
+        errEl.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = 'ترقية هذا الحساب لمدير (مرة واحدة فقط)';
+    }
+}
+
+async function verifySession() {
+    if (!token || !user) { showLogin(); return; }
+    try {
+        const data = await api('/api/me');
+        if (!data.user.is_admin) { signOut(true); return; }
+        user = data.user;
+        try { localStorage.setItem(USER_KEY, JSON.stringify(user)); } catch (_) {}
+        showDashboard();
+    } catch (_) {
+        showLogin();
+    }
+}
+
+// ----- Stats -----
+async function loadStats() {
+    const grid = document.getElementById('statsGrid');
+    grid.innerHTML = '';
+    try {
+        const data = await api('/api/admin/stats');
+        const s = data.stats;
+        const cards = [
+            ['total_bookings',     'إجمالي الحجوزات', 'primary'],
+            ['today_bookings',     'حجوزات اليوم',    'primary'],
+            ['pending_bookings',   'قيد الانتظار',     'warning'],
+            ['confirmed_bookings', 'مؤكدة',            'primary'],
+            ['completed_bookings', 'مكتملة',           'success'],
+            ['cancelled_bookings', 'ملغاة',            'danger'],
+            ['doctors_count',      'الأطباء',          ''],
+            ['users_count',        'المستخدمون',       ''],
+        ];
+        grid.innerHTML = cards.map(([k, label, accent]) => `
+            <div class="stat">
+                <div class="stat-label">${label}</div>
+                <div class="stat-value ${accent ? 'stat-accent-' + accent : ''}">${s[k]}</div>
+            </div>
+        `).join('');
+    } catch (err) {
+        grid.innerHTML = `<div class="empty">تعذر تحميل الإحصائيات: ${escapeHTML(err.message)}</div>`;
+    }
+}
+
+// ----- Doctors -----
+async function loadDoctors() {
+    const el = document.getElementById('doctorsList');
+    try {
+        const data = await api('/api/admin/doctors');
+        doctors = data.doctors;
+        document.getElementById('doctorsTotal').textContent = `${doctors.length} طبيب`;
+        renderDoctors();
+    } catch (err) {
+        el.innerHTML = `<div class="empty">تعذر تحميل الأطباء: ${escapeHTML(err.message)}</div>`;
+    }
+}
+
+function renderDoctors() {
+    const el = document.getElementById('doctorsList');
+    const allActive = selectedDoctorId === null ? 'active' : '';
+    const html = [`
+        <div class="doctor-item ${allActive}" data-id="" role="button" tabindex="0">
+            <div class="doctor-item-info">
+                <div class="doctor-item-name">جميع الأطباء</div>
+                <div class="doctor-item-specialty">عرض كل الحجوزات</div>
+            </div>
+            <span class="doctor-item-count">${doctors.reduce((acc, d) => acc + d.bookings_count, 0)}</span>
+        </div>
+    `];
+    doctors.forEach(d => {
+        const active = selectedDoctorId === d.id ? 'active' : '';
+        const hasActive = d.active_count > 0 ? 'has-active' : '';
+        html.push(`
+            <div class="doctor-item ${active}" data-id="${d.id}" role="button" tabindex="0">
+                <div class="doctor-item-info">
+                    <div class="doctor-item-name">${escapeHTML(d.name)}</div>
+                    <div class="doctor-item-specialty">${escapeHTML(d.specialty)}</div>
+                </div>
+                <span class="doctor-item-count ${d.bookings_count === 0 ? 'zero' : ''} ${hasActive}"
+                      data-active="${d.active_count}">${d.bookings_count}</span>
+            </div>
+        `);
+    });
+    el.innerHTML = html.join('');
+
+    el.querySelectorAll('.doctor-item').forEach(node => {
+        const handler = () => {
+            const id = node.dataset.id;
+            selectedDoctorId = id === '' ? null : Number(id);
+            renderDoctors();
+            updateBookingsTitle();
+            loadBookings();
+        };
+        node.addEventListener('click', handler);
+        node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }});
+    });
+}
+
+function updateBookingsTitle() {
+    const titleEl = document.getElementById('bookingsTitle');
+    if (selectedDoctorId === null) {
+        titleEl.textContent = 'جميع الحجوزات';
+    } else {
+        const d = doctors.find(x => x.id === selectedDoctorId);
+        titleEl.textContent = d ? `حجوزات: ${d.name}` : 'الحجوزات';
+    }
+}
+
+// ----- Bookings -----
+async function loadBookings() {
+    const wrap = document.getElementById('bookingsWrap');
+    wrap.innerHTML = '<div class="loading">جاري التحميل...</div>';
+
+    const params = new URLSearchParams();
+    if (selectedDoctorId !== null) params.set('doctor_id', String(selectedDoctorId));
+    const status = document.getElementById('filterStatus').value;
+    if (status) params.set('status', status);
+    const svc = document.getElementById('filterService').value;
+    if (svc) params.set('service_type', svc);
+    const q = document.getElementById('filterSearch').value.trim();
+    if (q) params.set('q', q);
+
+    try {
+        const data = await api('/api/admin/bookings?' + params.toString());
+        bookingsCache = data.bookings;
+        renderBookings();
+    } catch (err) {
+        wrap.innerHTML = `<div class="empty">تعذر تحميل الحجوزات: ${escapeHTML(err.message)}</div>`;
+    }
+}
+
+function renderBookings() {
+    const wrap = document.getElementById('bookingsWrap');
+    if (!bookingsCache.length) {
+        wrap.innerHTML = '<div class="empty">لا توجد حجوزات مطابقة.</div>';
+        return;
+    }
+    const rows = bookingsCache.map(b => {
+        const status   = b.status || 'pending';
+        const svcKey   = b.service_type || 'clinic';
+        const svcLabel = SERVICE_LABELS[svcKey] || svcKey;
+        const place    = svcKey === 'clinic'
+            ? (b.location_name
+                ? `<div>${escapeHTML(b.location_name)}</div><div class="small-muted">${escapeHTML(b.location_address || '')}</div>`
+                : '<span class="small-muted">عيادة غير محددة</span>')
+            : '<span class="small-muted">عن بُعد</span>';
+
+        return `
+            <tr data-id="${b.id}">
+                <td>
+                    <div><strong>${escapeHTML(b.patient_name)}</strong></div>
+                    <div class="small-muted">${escapeHTML(b.phone)}</div>
+                </td>
+                <td>
+                    <div>${escapeHTML(b.doctor_name || '-')}</div>
+                    <div class="small-muted">${escapeHTML(b.specialty || '')}</div>
+                </td>
+                <td><span class="svc-tag">${svcLabel}</span></td>
+                <td>${place}</td>
+                <td>${escapeHTML(b.date)}</td>
+                <td>${escapeHTML(PAYMENT_LABELS[b.payment_method] || b.payment_method || '-')}</td>
+                <td><span class="pill pill-${status}">${STATUS_LABELS[status] || status}</span></td>
+                <td>
+                    <div class="row-actions">
+                        ${status === 'pending' ? `<button class="btn btn-sm btn-primary" data-act="confirm">تأكيد</button>` : ''}
+                        ${(status === 'pending' || status === 'confirmed') ? `<button class="btn btn-sm btn-success" data-act="complete">إكمال</button>` : ''}
+                        ${status !== 'cancelled' ? `<button class="btn btn-sm btn-danger" data-act="cancel">إلغاء</button>` : ''}
+                        <button class="btn btn-sm" data-act="delete" title="حذف نهائي">🗑</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    wrap.innerHTML = `
+        <table class="bookings">
+            <thead>
+                <tr>
+                    <th>المريض</th>
+                    <th>الطبيب</th>
+                    <th>نوع الخدمة</th>
+                    <th>المكان</th>
+                    <th>التاريخ</th>
+                    <th>الدفع</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+
+    wrap.querySelectorAll('button[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const row = btn.closest('tr');
+            const id = Number(row.dataset.id);
+            const act = btn.dataset.act;
+            handleBookingAction(id, act, btn);
+        });
+    });
+}
+
+async function handleBookingAction(id, action, btn) {
+    const b = bookingsCache.find(x => Number(x.id) === id);
+    if (!b) return;
+
+    let confirmMsg = '';
+    if (action === 'cancel')   confirmMsg = `هل أنت متأكد من إلغاء حجز ${b.patient_name}؟`;
+    if (action === 'delete')   confirmMsg = `حذف نهائي لحجز ${b.patient_name}؟ لا يمكن التراجع.`;
+    if (action === 'complete') confirmMsg = `وضع حجز ${b.patient_name} كمكتمل؟`;
+    if (action === 'confirm')  confirmMsg = `تأكيد حجز ${b.patient_name}؟`;
+    if (confirmMsg && !confirm(confirmMsg)) return;
+
+    const row = btn.closest('tr');
+    row.querySelectorAll('button').forEach(b => b.disabled = true);
+
+    try {
+        if (action === 'delete') {
+            await api(`/api/admin/bookings/${id}`, { method: 'DELETE' });
+            showToast('تم حذف الحجز', 'success');
+        } else {
+            const status = action === 'confirm' ? 'confirmed'
+                         : action === 'complete' ? 'completed'
+                         : 'cancelled';
+            await api(`/api/admin/bookings/${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status })
+            });
+            showToast('تم تحديث الحجز', 'success');
+        }
+        // Refresh both stats + table + doctor counts
+        loadStats();
+        loadDoctors();
+        loadBookings();
+    } catch (err) {
+        showToast(err.message, 'error');
+        row.querySelectorAll('button').forEach(b => b.disabled = false);
+    }
+}
+
+// ----- Init -----
+document.getElementById('adminLoginForm').addEventListener('submit', handleLogin);
+document.getElementById('bootstrapBtn').addEventListener('click', handleBootstrap);
+document.getElementById('logoutBtn').addEventListener('click', () => signOut());
+document.getElementById('refreshBookings').addEventListener('click', () => { loadStats(); loadDoctors(); loadBookings(); });
+
+document.getElementById('filterStatus').addEventListener('change', loadBookings);
+document.getElementById('filterService').addEventListener('change', loadBookings);
+document.getElementById('filterSearch').addEventListener('input', () => {
+    clearTimeout(filterDebounce);
+    filterDebounce = setTimeout(loadBookings, 300);
+});
+
+loadStoredAuth();
+verifySession();
+</script>
+
+</body>
+</html>

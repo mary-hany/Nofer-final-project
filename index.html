@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>عيادة - احجز موعدك مع أفضل الأطباء في مصر</title>
+    <meta name="description"
+        content="عيادة هي منصة لحجز مواعيد الأطباء والمستشفيات في مصر. ابحث عن أفضل الأطباء والمراكز الطبية واحجز أونلاين بسهولة.">
+
+    <meta name="keywords" content="حجز مواعيد أطباء مصر, مستشفيات, مراكز طبية, أفضل دكتور, عيادات, حجز أونلاين">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030712">
+
+    <meta property="og:title" content="عيادة - احجز موعدك مع أفضل الأطباء والمستشفيات في مصر">
+    <meta property="og:description" content="عيادة هي منصة لحجز مواعيد الأطباء والمستشفيات في مصر.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍⚕️</text></svg>">
+    <link rel="apple-touch-icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍⚕️</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="header">
+        <a href="/" class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 2v2"></path><path d="M5 2v2"></path>
+                    <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 1 2-2h-1"></path>
+                    <path d="M8 15a6 6 0 0 0 12 0v-3"></path>
+                    <circle cx="20" cy="10" r="2"></circle>
+                </svg>
+            </div>
+            <span class="logo-text">عيادة</span>
+        </a>
+
+        <nav class="nav">
+            <a href="#specialties" class="nav-link">التخصصات</a>
+            <a href="#doctors" class="nav-link">الأطباء</a>
+            <a href="#clinics" class="nav-link">المستشفيات والمراكز</a>
+            <a href="#feedback" class="nav-link">الشكاوى</a>
+        </nav>
+
+        <div class="header-actions">
+            <button id="themeToggle" class="theme-toggle" type="button" title="تبديل المظهر">☀️</button>
+
+            <!-- Logged-out state -->
+            <div id="authLoggedOut" class="auth-group">
+                <button type="button" class="btn-small btn-login" data-action="open-login">دخول</button>
+                <button type="button" class="btn-small btn-register" data-action="open-register">حساب جديد</button>
+            </div>
+
+            <!-- Logged-in state (hidden until auth check completes) -->
+            <div id="authLoggedIn" class="auth-group" style="display:none;">
+                <span class="auth-user">مرحبًا، <strong id="authUserName"></strong></span>
+                <a href="admin.html" id="adminLink" class="btn-small btn-login" style="display:none;text-decoration:none;">🛠 لوحة التحكم</a>
+                <button type="button" class="btn-small btn-logout" data-action="logout">تسجيل خروج</button>
+            </div>
+
+            <button class="mobile-menu" type="button" title="القائمة">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                    <line x1="4" y1="6"  x2="20" y2="6"></line>
+                    <line x1="4" y1="18" x2="20" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero fade-in">
+        <div class="container mx-auto">
+            <h1 class="hero-title">احجز موعدك مع <span class="gradient-text">أفضل الأطباء</span></h1>
+            <p class="hero-subtitle">ابحث عن الطبيب المتخصص في مجالك واحجز موعدك أونلاين في دقائق.</p>
+
+            <form class="search-form" onsubmit="return false;">
+                <input type="text" id="searchInput" class="search-input"
+                    placeholder="اسم الطبيب أو التخصص..." maxlength="100" />
+                <select id="specialtySelect" class="search-select">
+                    <option value="">جميع التخصصات</option>
+                    <option value="جراحة العظام">جراحة العظام</option>
+                    <option value="طب الأطفال">طب الأطفال</option>
+                    <option value="الأمراض الداخلية">الأمراض الداخلية</option>
+                    <option value="الجلدية">الجلدية</option>
+                    <option value="الأنف والأذن">الأنف والأذن</option>
+                    <option value="النساء والتوليد">النساء والتوليد</option>
+                    <option value="طب العيون">طب العيون</option>
+                    <option value="طب الأسنان">طب الأسنان</option>
+                </select>
+                <select id="areaSelect" class="search-select">
+                    <option value="">كل المناطق</option>
+                    <option value="حلوان">حلوان</option>
+                    <option value="شبرا">شبرا</option>
+                    <option value="المعادي">المعادي</option>
+                    <option value="مدينة نصر">مدينة نصر</option>
+                    <option value="مصر الجديدة">مصر الجديدة</option>
+                </select>
+                <button type="button" id="searchBtn" class="search-btn">ابحث</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Specialties -->
+    <section id="specialties" class="section">
+        <div class="container mx-auto">
+            <h2 class="section-title fade-in-up">التخصصات المتاحة</h2>
+            <div class="grid specialties-grid fade-in-up"></div>
+        </div>
+    </section>
+
+    <!-- Doctors -->
+    <section id="doctors" class="section">
+        <div class="container mx-auto">
+            <h2 class="section-title fade-in-up">أفضل الأطباء</h2>
+            <div class="doctors-grid grid fade-in-up"></div>
+        </div>
+    </section>
+
+    <!-- Clinics -->
+    <section id="clinics" class="section">
+        <div class="container mx-auto">
+            <h2 class="section-title fade-in-up">أفضل المستشفيات والمراكز الطبية</h2>
+            <p class="section-subtitle fade-in-up">استعرض أشهر المستشفيات والمراكز الطبية في مصر مع تقييمات المرضى</p>
+            <form class="search-form fade-in-up" onsubmit="return false;" id="clinicsSearchForm">
+                <input type="text" id="clinicsSearchInput" class="search-input"
+                    placeholder="اسم المستشفى أو التخصص..." maxlength="100" />
+                <select id="clinicsSpecialtySelect" class="search-select">
+                    <option value="">جميع التخصصات</option>
+                    <option value="عام">عام</option>
+                    <option value="متخصص">متخصص</option>
+                    <option value="مستشفى">مستشفى</option>
+                    <option value="مركز طبي">مركز طبي</option>
+                </select>
+                <select id="clinicsAreaSelect" class="search-select">
+                    <option value="">كل المناطق</option>
+                    <option value="مدينة نصر">مدينة نصر</option>
+                    <option value="المعادي">المعادي</option>
+                    <option value="التجمع">التجمع</option>
+                    <option value="المهندسين">المهندسين</option>
+                    <option value="شبرا">شبرا</option>
+                    <option value="مصر الجديدة">مصر الجديدة</option>
+                </select>
+                <button type="button" id="clinicsSearchBtn" class="search-btn">ابحث في المستشفيات</button>
+            </form>
+            <div class="clinics-grid grid fade-in-up" id="clinicsGrid"></div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section cta-section">
+        <div class="container mx-auto">
+            <h2 class="cta-title">جاهز للحجز؟</h2>
+            <p class="cta-subtitle">اختر طبيبك واحجز موعدك في ثواني. دعم ٢٤/٧</p>
+            <button id="ctaBookBtn" type="button" class="btn-book cta-btn">ابدأ الحجز الآن</button>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+        <div class="modal-content modal-content-narrow">
+            <button type="button" id="loginModalClose" class="close" aria-label="إغلاق">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="loginTitle">تسجيل الدخول</h2>
+                <p class="modal-doctor-specialty">أدخل بريدك الإلكتروني أو رقم هاتفك للمتابعة</p>
+            </div>
+            <form id="loginForm" novalidate>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="loginIdentifier">البريد الإلكتروني أو رقم الهاتف</label>
+                        <input id="loginIdentifier" name="identifier" type="text" class="form-input"
+                            required maxlength="200" autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">كلمة المرور</label>
+                        <input id="loginPassword" name="password" type="password" class="form-input"
+                            required maxlength="128" autocomplete="current-password">
+                    </div>
+                    <p id="loginError" class="form-error" role="alert"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-submit">دخول</button>
+                </div>
+                <p class="modal-switch">
+                    ليس لديك حساب؟
+                    <button type="button" class="link-btn" data-action="switch-to-register">أنشئ حسابًا</button>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+        <div class="modal-content modal-content-narrow">
+            <button type="button" id="registerModalClose" class="close" aria-label="إغلاق">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="registerTitle">إنشاء حساب جديد</h2>
+                <p class="modal-doctor-specialty">يمكنك التسجيل بالبريد، الهاتف، أو كليهما</p>
+            </div>
+            <form id="registerForm" novalidate>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="registerName">الاسم الكامل</label>
+                        <input id="registerName" name="name" type="text" class="form-input"
+                            required maxlength="200" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="registerEmail">البريد الإلكتروني <span class="optional-tag">(اختياري)</span></label>
+                        <input id="registerEmail" name="email" type="email" class="form-input"
+                            maxlength="200" autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="registerPhone">رقم الهاتف <span class="optional-tag">(اختياري)</span></label>
+                        <input id="registerPhone" name="phone" type="tel" class="form-input"
+                            maxlength="20" pattern="^\+?[0-9]{7,15}$"
+                            placeholder="01XXXXXXXXX" autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="registerPassword">كلمة المرور</label>
+                        <input id="registerPassword" name="password" type="password" class="form-input"
+                            required minlength="8" maxlength="128" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="registerPasswordConfirm">تأكيد كلمة المرور</label>
+                        <input id="registerPasswordConfirm" name="password_confirm" type="password" class="form-input"
+                            required minlength="8" maxlength="128" autocomplete="new-password">
+                    </div>
+                    <p id="registerError" class="form-error" role="alert"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-submit">إنشاء الحساب</button>
+                </div>
+                <p class="modal-switch">
+                    لديك حساب بالفعل؟
+                    <button type="button" class="link-btn" data-action="switch-to-login">سجّل الدخول</button>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalDoctorName">
+        <div class="modal-content">
+            <button type="button" id="bookingModalClose" class="close" aria-label="إغلاق">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalDoctorName">د. أحمد محمد</h2>
+                <p class="modal-doctor-specialty" id="modalDoctorSpecialty">جراحة العظام</p>
+                <input type="hidden" id="modalDoctorId" value="1">
+            </div>
+            <form id="bookingForm">
+                <div class="modal-body">
+                    <div id="bookingServiceBadge" class="booking-service-badge" style="display:none;"></div>
+                    <div id="bookingLocationSummary" class="booking-loc-summary" style="display:none;"></div>
+                    <div class="form-group">
+                        <label class="form-label" for="bookPatientName">الاسم الكامل</label>
+                        <input id="bookPatientName" type="text" name="patient_name" class="form-input"
+                            required maxlength="200" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bookPhone">رقم الهاتف</label>
+                        <input id="bookPhone" type="tel" name="phone" class="form-input"
+                            required maxlength="20" pattern="^\+?[0-9]{7,15}$"
+                            placeholder="01XXXXXXXXX" autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bookDate">التاريخ المطلوب</label>
+                        <input id="bookDate" type="date" name="date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bookPayment">طريقة الدفع</label>
+                        <select id="bookPayment" name="payment_method" class="form-input" required>
+                            <option value="">اختر طريقة الدفع</option>
+                            <option value="visa">💳 Visa / MasterCard</option>
+                            <option value="fawry">💰 فوري</option>
+                            <option value="paypal">🌐 PayPal</option>
+                            <option value="vodafone_cash">📱 فودافون كاش</option>
+                            <option value="cash">💵 نقدي عند الحضور</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bookNotes">ملاحظات (اختياري)</label>
+                        <textarea id="bookNotes" name="notes" class="form-textarea" rows="3" maxlength="500"
+                            placeholder="أي تفاصيل إضافية..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-submit">احجز الموعد والدفع الآمن</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clinic Info Modal -->
+    <div id="clinicModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalClinicName">
+        <div class="modal-content">
+            <button type="button" id="clinicModalClose" class="close" aria-label="إغلاق">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalClinicName">مستشفى عين شمس</h2>
+                <p class="modal-clinic-type" id="modalClinicType">مستشفى</p>
+                <p class="modal-clinic-specialty" id="modalClinicSpecialty">عام</p>
+                <input type="hidden" id="modalClinicId" value="1">
+            </div>
+            <div class="modal-body">
+                <div class="clinic-details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">الموقع:</span>
+                        <span id="modalClinicLocation" class="detail-value"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">الهاتف:</span>
+                        <span id="modalClinicPhone" class="detail-value"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">السعة:</span>
+                        <span id="modalClinicCapacity" class="detail-value"></span><span> سرير</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">التقييم:</span>
+                        <span id="modalClinicRating" class="detail-value rating-stars"></span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="clinicMapBtn" type="button" class="btn-book">🗺️ عرض الخريطة</button>
+                    <a id="modalClinicWebsite" class="btn-book" target="_blank" rel="noopener noreferrer" style="display:none;">🌐 الموقع الرسمي</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Profile Modal -->
+    <div id="doctorModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="doctorProfileName">
+        <div class="modal-content modal-content-wide">
+            <button type="button" id="doctorModalClose" class="close" aria-label="إغلاق">&times;</button>
+
+            <div class="doctor-profile">
+                <!-- Header -->
+                <div class="doctor-profile-header">
+                    <div class="doctor-profile-avatar" id="doctorProfileAvatar">👨‍⚕️</div>
+                    <div class="doctor-profile-info">
+                        <h2 class="modal-title" id="doctorProfileName">د. ...</h2>
+                        <p class="modal-doctor-specialty" id="doctorProfileSpecialty"></p>
+                        <div class="doctor-profile-meta">
+                            <span class="rating-stars" id="doctorProfileStars"></span>
+                            <span class="doctor-profile-rating-num" id="doctorProfileRatingNum"></span>
+                            <span class="doctor-profile-reviews-count" id="doctorProfileReviewsCount"></span>
+                        </div>
+                        <button class="btn-book" id="doctorProfileBookBtn" type="button">احجز موعد</button>
+                    </div>
+                </div>
+
+                <!-- Details -->
+                <div class="doctor-profile-section">
+                    <h3 class="profile-section-title">بيانات الطبيب</h3>
+                    <div class="clinic-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">التخصص:</span>
+                            <span class="detail-value" id="doctorProfileSpecialty2"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">سعر الكشف يبدأ من:</span>
+                            <span class="detail-value" id="doctorProfilePrice"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services (home visit, video, chat) -->
+                <div class="doctor-profile-section">
+                    <h3 class="profile-section-title">الخدمات المتاحة</h3>
+                    <div id="doctorServicesList" class="services-list">
+                        <div class="reviews-empty">جاري التحميل...</div>
+                    </div>
+                </div>
+
+                <!-- Locations + schedules -->
+                <div class="doctor-profile-section">
+                    <h3 class="profile-section-title">أماكن التواجد والمواعيد</h3>
+                    <div id="doctorLocationsList" class="locations-list">
+                        <div class="reviews-empty">جاري تحميل أماكن التواجد...</div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <div class="doctor-profile-section">
+                    <h3 class="profile-section-title">آراء المرضى</h3>
+
+                    <!-- Write a review -->
+                    <form id="reviewForm" class="review-form">
+                        <p class="review-form-title">شاركنا تجربتك</p>
+                        <div class="star-input" id="reviewStarInput" role="radiogroup" aria-label="التقييم">
+                            <button type="button" class="star-btn" data-value="1" aria-label="نجمة واحدة">☆</button>
+                            <button type="button" class="star-btn" data-value="2" aria-label="نجمتان">☆</button>
+                            <button type="button" class="star-btn" data-value="3" aria-label="ثلاث نجوم">☆</button>
+                            <button type="button" class="star-btn" data-value="4" aria-label="أربع نجوم">☆</button>
+                            <button type="button" class="star-btn" data-value="5" aria-label="خمس نجوم">☆</button>
+                        </div>
+                        <input type="hidden" id="reviewRating" value="0">
+                        <textarea id="reviewComment" class="form-textarea" rows="3" maxlength="1000"
+                            placeholder="اكتب رأيك في الطبيب..."></textarea>
+                        <div class="review-form-actions">
+                            <button type="submit" class="btn-submit">نشر التقييم</button>
+                            <span class="review-form-msg" id="reviewFormMsg"></span>
+                        </div>
+                    </form>
+
+                    <!-- List -->
+                    <div id="reviewsList" class="reviews-list">
+                        <div class="reviews-empty">جاري تحميل التقييمات...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container mx-auto">
+            <div class="footer-links">
+                <a href="#privacy">سياسة الخصوصية</a>
+                <a href="#terms">الشروط والأحكام</a>
+                <a href="#help">المساعدة</a>
+                <a href="#about">عن عيادة</a>
+            </div>
+            <p class="footer-bottom">© 2026 عيادة. جميع الحقوق محفوظة. | منصة حجز مواعيد طبية ومستشفيات</p>
+        </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+    <script src="script_doctors.js" defer></script>
+</body>
+
+</html>

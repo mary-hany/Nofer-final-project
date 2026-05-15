@@ -49,6 +49,7 @@
             <a href="#specialties" class="nav-link">التخصصات</a>
             <a href="#doctors" class="nav-link">الأطباء</a>
             <a href="#clinics" class="nav-link">المستشفيات والمراكز</a>
+            <a href="#" class="nav-link" id="myBookingsLink" style="display:none;">حجوزاتي</a>
             <a href="#feedback" class="nav-link">الشكاوى</a>
         </nav>
 
@@ -139,6 +140,11 @@
                     <option value="">جميع التخصصات</option>
                     <option value="عام">عام</option>
                     <option value="متخصص">متخصص</option>
+                    <option value="قلب">قلب</option>
+                    <option value="أورام">أورام</option>
+                    <option value="عيون">عيون</option>
+                    <option value="أطفال">أطفال</option>
+                    <option value="نساء وتوليد">نساء وتوليد</option>
                     <option value="مستشفى">مستشفى</option>
                     <option value="مركز طبي">مركز طبي</option>
                 </select>
@@ -146,10 +152,20 @@
                     <option value="">كل المناطق</option>
                     <option value="مدينة نصر">مدينة نصر</option>
                     <option value="المعادي">المعادي</option>
-                    <option value="التجمع">التجمع</option>
+                    <option value="التجمع">التجمع الخامس</option>
                     <option value="المهندسين">المهندسين</option>
+                    <option value="الدقي">الدقي</option>
                     <option value="شبرا">شبرا</option>
                     <option value="مصر الجديدة">مصر الجديدة</option>
+                    <option value="العباسية">العباسية</option>
+                    <option value="القاهرة الجديدة">القاهرة الجديدة</option>
+                    <option value="حدائق الأهرام">حدائق الأهرام</option>
+                    <option value="الهرم">الهرم</option>
+                    <option value="٦ أكتوبر">٦ أكتوبر</option>
+                    <option value="الشيخ زايد">الشيخ زايد</option>
+                    <option value="السيدة زينب">السيدة زينب</option>
+                    <option value="إمبابة">إمبابة</option>
+                    <option value="وسط البلد">وسط البلد</option>
                 </select>
                 <button type="button" id="clinicsSearchBtn" class="search-btn">ابحث في المستشفيات</button>
             </form>
@@ -287,6 +303,10 @@
                             <option value="cash">💵 نقدي عند الحضور</option>
                         </select>
                     </div>
+
+                    <!-- Dynamic fields shown based on the chosen payment method -->
+                    <div id="paymentExtraFields"></div>
+
                     <div class="form-group">
                         <label class="form-label" for="bookNotes">ملاحظات (اختياري)</label>
                         <textarea id="bookNotes" name="notes" class="form-textarea" rows="3" maxlength="500"
@@ -432,6 +452,58 @@
             <p class="footer-bottom">© 2026 عيادة. جميع الحقوق محفوظة. | منصة حجز مواعيد طبية ومستشفيات</p>
         </div>
     </footer>
+
+    <!-- My Bookings modal -->
+    <div id="myBookingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="myBookingsTitle">
+        <div class="my-bookings-content">
+            <div class="my-bookings-header">
+                <div>
+                    <h2 class="modal-title" id="myBookingsTitle">حجوزاتي</h2>
+                    <p class="my-bookings-subtitle">جميع حجوزاتك السابقة والقادمة. فعّل التذكير لتلقّي إشعار قبل الموعد.</p>
+                </div>
+                <div class="my-bookings-header-actions">
+                    <span class="my-bookings-count-pill">
+                        <span id="myBookingsCount">0</span> حجز
+                    </span>
+                    <button type="button" id="myBookingsRefresh" class="btn-icon-circle" title="تحديث" aria-label="تحديث">⟳</button>
+                    <button type="button" id="myBookingsClose" class="btn-icon-circle btn-icon-close" title="إغلاق" aria-label="إغلاق">&times;</button>
+                </div>
+            </div>
+            <div class="my-bookings-body" id="myBookingsContent">
+                <div class="bookings-empty">
+                    <div class="bookings-empty-icon">⏳</div>
+                    <p>جاري التحميل...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking confirmation modal (rich post-booking success) -->
+    <div id="bookingConfirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="confirm-content">
+            <button type="button" class="close" id="confirmModalClose" aria-label="إغلاق">&times;</button>
+            <div class="confirm-hero">
+                <div class="confirm-check" aria-hidden="true">✓</div>
+                <h2 id="confirmTitle">تم تأكيد حجزك!</h2>
+                <p>سجّل التفاصيل أدناه أو راجعها لاحقاً من صفحة حجوزاتي</p>
+                <span class="confirm-id" id="confirmBookingId">#—</span>
+            </div>
+            <div class="confirm-body">
+                <div class="confirm-details" id="confirmDetails"></div>
+                <div class="confirm-reminder" id="confirmReminderBox">
+                    <div class="confirm-reminder-icon">🔔</div>
+                    <div class="confirm-reminder-text" id="confirmReminderText">
+                        <strong>تذكير تلقائي:</strong> سيصلك إشعار قبل ميعاد الكشف بـ ٢٤ ساعة وبساعة واحدة.
+                        فعّل إشعارات المتصفح ليصلك التنبيه حتى لو غادرت الموقع.
+                    </div>
+                </div>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="btn-ghost" id="confirmCloseBtn">إغلاق</button>
+                <button type="button" class="btn-primary-solid" id="confirmGotoBookings">عرض حجوزاتي ←</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js" defer></script>
     <script src="script_doctors.js" defer></script>

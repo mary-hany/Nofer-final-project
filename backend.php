@@ -108,17 +108,27 @@ function bearer_token(): ?string {
 function current_user(SQLite3 $db): ?array {
     $token = bearer_token();
     if ($token === null) return null;
+
     $stmt = $db->prepare(
-        'SELECT u.id, u.name, u.email, u.phone
-         FROM sessions s JOIN users u ON u.id = s.user_id
-         WHERE s.token_hash = ? AND s.expires_at > strftime("%s","now")
+        'SELECT 
+            u.id,
+            u.name,
+            u.email,
+            u.phone,
+            u.is_admin
+         FROM sessions s
+         JOIN users u ON u.id = s.user_id
+         WHERE s.token_hash = ?
+           AND s.expires_at > strftime("%s","now")
          LIMIT 1'
     );
+
     $stmt->bindValue(1, hash_token($token), SQLITE3_TEXT);
+
     $row = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+
     return $row ?: null;
 }
-
 function require_auth(SQLite3 $db): array {
     $user = current_user($db);
     if (!$user) json_response(401, ['success' => false, 'error' => 'Authentication required']);
@@ -441,6 +451,85 @@ try {
         }
     }
 
+    // ---------- Clinic catalog seed ----------
+    // The clinics table powers the "أفضل المستشفيات والمراكز الطبية" section.
+    // If the table is empty (fresh DB, or DB built before the catalog was added),
+    // populate it with a curated list of well-known Cairo/Giza hospitals + centers.
+    // Manual additions are never overwritten — we only seed when the table is empty.
+    $clinicCount = (int)$db->querySingle('SELECT COUNT(*) FROM clinics');
+    if ($clinicCount === 0) {
+        $clinicSeed = [
+            // Original entries
+            ['مستشفى الراعي الصالح',              'مستشفى',   'عام',          '١٥ شارع الهرم - الهرم - الجيزة ١٢٥١١',                '02-37608888', 250, 4.5, 29.9993, 31.1957, ''],
+            ['مركز لوقا الطبي',                    'مركز طبي', 'متخصص',        '١٠ شارع رمسيس - العباسية - القاهرة ١١٥٦٦',            '02-26812345',  80, 4.6, 30.0750, 31.2686, 'luka-medical.com'],
+            ['مستشفى شبرا العام',                  'مستشفى',   'عام',          'شبرا - ٤٠ شارع الترعة - القاهرة ١١٦٤٣',                '02-24367890', 400, 4.1, 30.0861, 31.2434, ''],
+            ['مستشفى الدمرداش التعليمي',            'مستشفى',   'عام',          'العباسية - شارع الدمرداش - القاهرة ١١٧٥٧',             '02-26055255', 800, 4.3, 30.0889, 31.2922, 'demerdash.edu.eg'],
+            ['مستشفى سانت تريزا',                  'مستشفى',   'عام',          'شبرا - ١٠ شارع سانت تريزا - القاهرة ١١٦٤٣',           '02-24320000', 150, 4.7, 30.0850, 31.2450, ''],
+            ['مستشفى مارمرقس',                     'مستشفى',   'عام',          '١٠ شارع مارمرقس - مصر الجديدة - القاهرة ١١٧٧١',       '02-24123456', 200, 4.4, 30.0400, 31.3200, ''],
+            ['مستشفى السلام الدولي',               'مستشفى',   'عام',          '٢٥ شارع كورنيش النيل - المعادي - القاهرة ١١٤٣١',       '02-25240077', 350, 4.6, 29.9656, 31.2542, 'alsalamhospital.com'],
+            ['مستشفى الدفاع الجوي التخصصي',         'مستشفى',   'متخصص',        'مدينة نصر - شارع ستار الخير - القاهرة ١١٧٧١',          '02-24051234', 300, 4.2, 30.0600, 31.3100, ''],
+            // Major private hospitals
+            ['مستشفى دار الفؤاد',                   'مستشفى',   'متخصص',        'مدينة نصر - شارع مكرم عبيد - القاهرة',                '02-26909000', 350, 4.8, 30.0626, 31.3247, 'darelfouad.com'],
+            ['مستشفى السعودي الألماني',             'مستشفى',   'عام',          'التجمع الخامس - شارع التسعين الجنوبي - القاهرة',       '02-26144444', 500, 4.7, 30.0148, 31.4275, 'sghgroup.com'],
+            ['مستشفى كليوباترا',                    'مستشفى',   'عام',          'مصر الجديدة - شارع كليوباترا - القاهرة ١١٧٧١',         '02-22697799', 280, 4.5, 30.0978, 31.3296, 'cleopatrahospitals.com'],
+            ['مستشفى النيل بدراوي',                  'مستشفى',   'عام',          'كورنيش النيل - المعادي - القاهرة ١١٤٣١',                '02-25240212', 240, 4.6, 29.9521, 31.2487, 'nileurhospital.com'],
+            ['مستشفى كليوباترا التجمع',              'مستشفى',   'عام',          'التجمع الخامس - شارع التسعين الجنوبي - القاهرة',       '02-26183100', 220, 4.5, 30.0192, 31.4341, 'cleopatrahospitals.com'],
+            ['مستشفى الجلاء التعليمي',              'مستشفى',   'نساء وتوليد',  'الجلاء - وسط البلد - القاهرة ١١٥١١',                   '02-25770007', 450, 4.0, 30.0500, 31.2400, ''],
+            ['المستشفى الإيطالي',                    'مستشفى',   'عام',          'شبرا - ميدان عبدالحميد لطفي - القاهرة ١١٦٤٣',          '02-24585577', 180, 4.3, 30.0750, 31.2400, ''],
+            ['مستشفى أهل مصر للحروق',                'مستشفى',   'متخصص',        'القطامية - شارع ٩٠ - القاهرة الجديدة',                  '02-25320005', 200, 4.7, 29.9978, 31.4567, 'ahlmasr.org'],
+            // Specialty centers
+            ['معهد القلب القومي',                    'مستشفى',   'قلب',          'إمبابة - الكورنيش - الجيزة ١٢٦٥١',                      '02-33371007', 600, 4.4, 30.0820, 31.2065, 'nhi.gov.eg'],
+            ['معهد ناصر للأبحاث والعلاج',            'مستشفى',   'عام',          'شبرا - شارع الترعة البولاقية - القاهرة',                '02-24319111', 700, 4.2, 30.0890, 31.2470, ''],
+            ['مستشفى ٥٧٣٥٧ لعلاج سرطان الأطفال',      'مستشفى',   'أورام',        'السيدة زينب - الكورنيش - القاهرة ١١٤١١',                '02-25351500', 320, 4.9, 30.0150, 31.2350, '57357.org'],
+            ['المعهد القومي للأورام',                'مستشفى',   'أورام',        'فم الخليج - السيدة زينب - القاهرة',                     '02-23644720', 500, 4.3, 30.0167, 31.2389, 'nci.cu.edu.eg'],
+            ['مستشفى الرمد التخصصي',                  'مستشفى',   'عيون',         'روض الفرج - شارع روض الفرج - القاهرة ١١٦٢١',            '02-24582101', 220, 4.4, 30.0900, 31.2380, ''],
+            ['مركز مغربي للعيون',                    'مركز طبي', 'عيون',         'المهندسين - شارع شهاب - الجيزة ١٢٦١١',                  '02-37623040', 100, 4.7, 30.0606, 31.2058, 'magrabi.com.eg'],
+            ['مركز نور الحياة لعلاج العقم',          'مركز طبي', 'نساء وتوليد',  'المهندسين - شارع جامعة الدول العربية - الجيزة',         '02-33361234',  60, 4.6, 30.0581, 31.2018, ''],
+            ['مركز السلام لجراحة المخ والأعصاب',      'مركز طبي', 'متخصص',        'مدينة نصر - شارع مكرم عبيد - القاهرة',                  '02-22745500',  80, 4.5, 30.0640, 31.3260, ''],
+            // Additional hospitals
+            ['مستشفى السلام الدولي - التجمع',         'مستشفى',   'عام',          'التجمع الخامس - الحي الأول - القاهرة الجديدة',           '02-26181111', 400, 4.6, 30.0220, 31.4180, 'alsalamhospital.com'],
+            ['مستشفى الصفوة',                        'مستشفى',   'عام',          'حدائق الأهرام - شارع الجيش - الجيزة',                    '02-38380101', 150, 4.4, 29.9700, 31.1450, ''],
+            ['مستشفى دار العيون',                    'مستشفى',   'عيون',         'حدائق الأهرام - شارع جاردينيا - الجيزة',                 '02-38384700', 120, 4.5, 29.9720, 31.1480, ''],
+            ['مستشفى الكرمة للنساء والتوليد',         'مستشفى',   'نساء وتوليد',  'التجمع الخامس - حي النرجس - القاهرة الجديدة',            '02-26171717', 100, 4.6, 30.0250, 31.4400, ''],
+            ['مستشفى تبارك للأطفال',                  'مستشفى',   'أطفال',        'التجمع الخامس - الحي الأول - القاهرة الجديدة',           '02-26181144', 130, 4.5, 30.0240, 31.4190, ''],
+            ['مستشفى كوينز للنساء والتوليد',          'مستشفى',   'نساء وتوليد',  'حدائق الأهرام - البوابة الثالثة - الجيزة',               '02-38385000',  90, 4.4, 29.9710, 31.1460, ''],
+            // Mohandessin, Dokki, Heliopolis, October City
+            ['مستشفى المهندسين',                     'مستشفى',   'عام',          'المهندسين - شارع جامعة الدول العربية - الجيزة',          '02-33450707', 200, 4.3, 30.0590, 31.2030, ''],
+            ['مستشفى الدقي التخصصي',                  'مستشفى',   'متخصص',        'الدقي - شارع التحرير - الجيزة ١٢٣١١',                    '02-37606060', 180, 4.4, 30.0395, 31.2126, ''],
+            ['مستشفى مصر الدولي',                    'مستشفى',   'عام',          'الدقي - شارع البطل أحمد عبدالعزيز - الجيزة',             '02-33358000', 220, 4.5, 30.0410, 31.2100, 'misrhospital.com'],
+            ['مستشفى هليوبوليس',                     'مستشفى',   'عام',          'مصر الجديدة - شارع الميرغني - القاهرة ١١٧٧١',            '02-22906090', 200, 4.4, 30.0900, 31.3220, ''],
+            ['مستشفى ٦ أكتوبر التخصصي',               'مستشفى',   'عام',          'مدينة ٦ أكتوبر - الحي الأول - الجيزة ١٢٥٧٣',             '02-38371234', 250, 4.5, 29.9285, 30.9188, ''],
+            ['مستشفى الشيخ زايد التخصصي',            'مستشفى',   'متخصص',        'مدينة الشيخ زايد - الحي الأول - الجيزة',                 '02-38500900', 300, 4.6, 30.0610, 30.9700, ''],
+        ];
+
+        $db->exec('BEGIN');
+        try {
+            $ins = $db->prepare(
+                'INSERT INTO clinics (name, type, specialty, location, phone, capacity, rating, lat, lng, website)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            foreach ($clinicSeed as $c) {
+                $ins->bindValue(1,  $c[0], SQLITE3_TEXT);
+                $ins->bindValue(2,  $c[1], SQLITE3_TEXT);
+                $ins->bindValue(3,  $c[2], SQLITE3_TEXT);
+                $ins->bindValue(4,  $c[3], SQLITE3_TEXT);
+                $ins->bindValue(5,  $c[4], SQLITE3_TEXT);
+                $ins->bindValue(6,  $c[5], SQLITE3_INTEGER);
+                $ins->bindValue(7,  $c[6], SQLITE3_FLOAT);
+                $ins->bindValue(8,  $c[7], SQLITE3_FLOAT);
+                $ins->bindValue(9,  $c[8], SQLITE3_FLOAT);
+                $ins->bindValue(10, $c[9], SQLITE3_TEXT);
+                $ins->execute();
+                $ins->reset();
+            }
+            $ins->close();
+            $db->exec('COMMIT');
+        } catch (Throwable $e) {
+            $db->exec('ROLLBACK');
+            error_log('[nofer] clinic seed failed: ' . $e->getMessage());
+        }
+    }
+
     // Best-effort housekeeping: prune expired sessions + old attempts (1 in 50 requests)
     if (random_int(1, 50) === 1) {
         $db->exec('DELETE FROM sessions WHERE expires_at < strftime("%s","now")');
@@ -522,7 +611,7 @@ try {
                 'name'     => $name,
                 'email'    => $email !== '' ? $email : null,
                 'phone'    => $phone !== '' ? $phone : null,
-                'is_admin' => true,
+                'is_admin' => false,
             ],
         ]);
     }
@@ -543,7 +632,7 @@ try {
             json_response(400, ['success' => false, 'error' => 'Invalid credentials']);
         }
 
-        $stmt = $db->prepare('SELECT id, name, email, phone, password_hash FROM users WHERE email = ? OR phone = ? LIMIT 1');
+        $stmt = $db->prepare('SELECT id, name, email, phone, password_hash, is_admin FROM users WHERE email = ? OR phone = ? LIMIT 1');
         $stmt->bindValue(1, $identifier, SQLITE3_TEXT);
         $stmt->bindValue(2, $identifier, SQLITE3_TEXT);
         $user = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
@@ -677,25 +766,88 @@ try {
             $stmt->bindValue(9, $locationId, SQLITE3_INTEGER);
         }
         $stmt->execute();
+        $newId = (int)$db->lastInsertRowID();
 
-        json_response(201, ['success' => true, 'id' => $db->lastInsertRowID()]);
+        // Return the full booking with joined doctor/location info, so the
+        // frontend can display a rich confirmation + reminder without a refetch.
+        $detail = $db->prepare(
+            'SELECT b.id, b.doctor_id, b.patient_name, b.phone, b.date,
+                    b.payment_method, b.notes, b.status, b.created_at,
+                    b.service_type, b.location_id,
+                    d.name AS doctor_name, d.specialty, d.rating AS doctor_rating,
+                    dl.clinic_name  AS location_name,
+                    dl.address      AS location_address,
+                    dl.phone        AS location_phone
+             FROM bookings b
+             LEFT JOIN doctors d ON d.id = b.doctor_id
+             LEFT JOIN doctor_locations dl ON dl.id = b.location_id
+             WHERE b.id = ?'
+        );
+        $detail->bindValue(1, $newId, SQLITE3_INTEGER);
+        $full = $detail->execute()->fetchArray(SQLITE3_ASSOC);
+
+        json_response(201, [
+            'success' => true,
+            'id'      => $newId,
+            'booking' => $full ?: ['id' => $newId],
+        ]);
     }
 
     // ----- Bookings: list mine (auth required) -----
     if ($path === '/api/bookings' && $method === 'GET') {
         $user = require_auth($db);
         $stmt = $db->prepare(
-            'SELECT b.id, b.doctor_id, b.patient_name, b.phone, b.date, b.payment_method,
-                    b.notes, b.status, b.created_at, d.name AS doctor_name, d.specialty
-             FROM bookings b LEFT JOIN doctors d ON d.id = b.doctor_id
+            'SELECT b.id, b.doctor_id, b.patient_name, b.phone, b.date,
+                    b.payment_method, b.notes, b.status, b.created_at,
+                    b.service_type, b.location_id,
+                    d.name AS doctor_name, d.specialty, d.rating AS doctor_rating,
+                    dl.clinic_name AS location_name,
+                    dl.address     AS location_address,
+                    dl.phone       AS location_phone
+             FROM bookings b
+             LEFT JOIN doctors d ON d.id = b.doctor_id
+             LEFT JOIN doctor_locations dl ON dl.id = b.location_id
              WHERE b.user_id = ?
-             ORDER BY b.created_at DESC'
+             ORDER BY b.date DESC, b.created_at DESC'
         );
         $stmt->bindValue(1, $user['id'], SQLITE3_INTEGER);
         $res = $stmt->execute();
         $rows = [];
         while ($row = $res->fetchArray(SQLITE3_ASSOC)) $rows[] = $row;
         json_response(200, ['success' => true, 'bookings' => $rows]);
+    }
+
+    // ----- Bookings: cancel mine (auth required) -----
+    // PATCH /api/bookings/{id}  body: { "status": "cancelled" }
+    // Only the user who created the booking can cancel it, and only when it's
+    // still pending or confirmed (not completed/already cancelled).
+    if ($method === 'PATCH' && preg_match('#^/api/bookings/(\d+)$#', $path, $m)) {
+        $user = require_auth($db);
+        $bookingId = (int)$m[1];
+        $body = read_json_body();
+        $newStatus = clean_string($body['status'] ?? null, 20);
+
+        if ($newStatus !== 'cancelled') {
+            json_response(400, ['success' => false, 'error' => 'يمكن للمستخدم إلغاء الحجز فقط']);
+        }
+
+        $chk = $db->prepare('SELECT user_id, status FROM bookings WHERE id = ?');
+        $chk->bindValue(1, $bookingId, SQLITE3_INTEGER);
+        $row = $chk->execute()->fetchArray(SQLITE3_ASSOC);
+        if (!$row) json_response(404, ['success' => false, 'error' => 'الحجز غير موجود']);
+        if ((int)$row['user_id'] !== (int)$user['id']) {
+            json_response(403, ['success' => false, 'error' => 'لا يمكنك تعديل حجز شخص آخر']);
+        }
+        if (in_array($row['status'], ['completed', 'cancelled'], true)) {
+            json_response(400, ['success' => false, 'error' => 'لا يمكن إلغاء حجز مكتمل أو ملغي بالفعل']);
+        }
+
+        $upd = $db->prepare('UPDATE bookings SET status = ? WHERE id = ?');
+        $upd->bindValue(1, 'cancelled', SQLITE3_TEXT);
+        $upd->bindValue(2, $bookingId, SQLITE3_INTEGER);
+        $upd->execute();
+
+        json_response(200, ['success' => true, 'id' => $bookingId, 'status' => 'cancelled']);
     }
 
     // ----- Doctor profile (public) -----
@@ -969,7 +1121,29 @@ try {
 
         $doctorsCount = (int)$db->querySingle('SELECT COUNT(*) FROM doctors');
         $usersCount   = (int)$db->querySingle('SELECT COUNT(*) FROM users');
+        $adminsCount  = (int)$db->querySingle('SELECT COUNT(*) FROM users WHERE is_admin = 1');
         $today        = $db->querySingle("SELECT COUNT(*) FROM bookings WHERE date = date('now')");
+
+        // Per-specialty breakdown: doctor count + booking totals
+        $specRes = $db->query(
+            'SELECT d.specialty,
+                    COUNT(DISTINCT d.id) AS doctors,
+                    COUNT(b.id) AS total_bookings,
+                    SUM(CASE WHEN b.status NOT IN ("cancelled","completed") THEN 1 ELSE 0 END) AS active_bookings
+             FROM doctors d
+             LEFT JOIN bookings b ON b.doctor_id = d.id
+             GROUP BY d.specialty
+             ORDER BY doctors DESC, total_bookings DESC'
+        );
+        $specialties = [];
+        while ($r = $specRes->fetchArray(SQLITE3_ASSOC)) {
+            $specialties[] = [
+                'specialty'       => $r['specialty'],
+                'doctors'         => (int)$r['doctors'],
+                'total_bookings'  => (int)$r['total_bookings'],
+                'active_bookings' => (int)($r['active_bookings'] ?? 0),
+            ];
+        }
 
         json_response(200, [
             'success' => true,
@@ -982,7 +1156,9 @@ try {
                 'today_bookings'     => (int)$today,
                 'doctors_count'      => $doctorsCount,
                 'users_count'        => $usersCount,
+                'admins_count'       => $adminsCount,
             ],
+            'specialties' => $specialties,
         ]);
     }
 
@@ -1080,6 +1256,167 @@ try {
             json_response(404, ['success' => false, 'error' => 'الحجز غير موجود']);
         }
         json_response(200, ['success' => true, 'id' => $bookingId, 'status' => $status]);
+    }
+
+    // ============================================================
+    // User management (admin only)
+    // ============================================================
+
+    // GET /api/admin/users — list every user with summary info
+    // Query params: q (search in name/email/phone), role ('admin'|'user'|'')
+    if ($path === '/api/admin/users' && $method === 'GET') {
+        require_admin($db);
+
+        $q    = isset($_GET['q'])    ? trim((string)$_GET['q'])    : '';
+        $role = isset($_GET['role']) ? trim((string)$_GET['role']) : '';
+
+        $where  = [];
+        $params = [];
+        if ($q !== '') {
+            $where[] = '(u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?)';
+            $like = '%' . $q . '%';
+            $params[] = [$like, SQLITE3_TEXT];
+            $params[] = [$like, SQLITE3_TEXT];
+            $params[] = [$like, SQLITE3_TEXT];
+        }
+        if ($role === 'admin') { $where[] = 'u.is_admin = 1'; }
+        elseif ($role === 'user') { $where[] = 'u.is_admin = 0'; }
+
+        $sql = 'SELECT u.id, u.name, u.email, u.phone, u.is_admin, u.created_at,
+                       COUNT(b.id) AS bookings_count,
+                       MAX(b.created_at) AS last_booking_at
+                FROM users u
+                LEFT JOIN bookings b ON b.user_id = u.id';
+        if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
+        $sql .= ' GROUP BY u.id ORDER BY u.is_admin DESC, u.created_at DESC';
+
+        $stmt = $db->prepare($sql);
+        foreach ($params as $i => $p) $stmt->bindValue($i + 1, $p[0], $p[1]);
+        $res = $stmt->execute();
+        $rows = [];
+        while ($r = $res->fetchArray(SQLITE3_ASSOC)) {
+            $rows[] = [
+                'id'              => (int)$r['id'],
+                'name'            => $r['name'],
+                'email'           => $r['email'],
+                'phone'           => $r['phone'],
+                'is_admin'        => ((int)$r['is_admin']) === 1,
+                'created_at'      => $r['created_at'],
+                'bookings_count'  => (int)$r['bookings_count'],
+                'last_booking_at' => $r['last_booking_at'],
+            ];
+        }
+        json_response(200, ['success' => true, 'users' => $rows]);
+    }
+
+    // GET /api/admin/users/{id} — single user detail + their bookings
+    if ($method === 'GET' && preg_match('#^/api/admin/users/(\d+)$#', $path, $m)) {
+        require_admin($db);
+        $userId = (int)$m[1];
+
+        $stmt = $db->prepare(
+            'SELECT id, name, email, phone, is_admin, created_at
+             FROM users WHERE id = ? LIMIT 1'
+        );
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $u = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        if (!$u) json_response(404, ['success' => false, 'error' => 'المستخدم غير موجود']);
+
+        // Pull this user's bookings (most recent first)
+        $bstmt = $db->prepare(
+            'SELECT b.id, b.patient_name, b.phone, b.date, b.status,
+                    b.service_type, b.payment_method, b.created_at,
+                    d.name AS doctor_name, d.specialty
+             FROM bookings b
+             LEFT JOIN doctors d ON d.id = b.doctor_id
+             WHERE b.user_id = ?
+             ORDER BY b.created_at DESC
+             LIMIT 100'
+        );
+        $bstmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $bres = $bstmt->execute();
+        $bookings = [];
+        while ($r = $bres->fetchArray(SQLITE3_ASSOC)) {
+            $bookings[] = [
+                'id'             => (int)$r['id'],
+                'patient_name'   => $r['patient_name'],
+                'phone'          => $r['phone'],
+                'date'           => $r['date'],
+                'status'         => $r['status'],
+                'service_type'   => $r['service_type'],
+                'payment_method' => $r['payment_method'],
+                'created_at'     => $r['created_at'],
+                'doctor_name'    => $r['doctor_name'],
+                'specialty'      => $r['specialty'],
+            ];
+        }
+
+        json_response(200, [
+            'success' => true,
+            'user' => [
+                'id'         => (int)$u['id'],
+                'name'       => $u['name'],
+                'email'      => $u['email'],
+                'phone'      => $u['phone'],
+                'is_admin'   => ((int)$u['is_admin']) === 1,
+                'created_at' => $u['created_at'],
+            ],
+            'bookings' => $bookings,
+        ]);
+    }
+
+    // PATCH /api/admin/users/{id} — promote / demote admin
+    // Body: { "is_admin": true|false }
+    if ($method === 'PATCH' && preg_match('#^/api/admin/users/(\d+)$#', $path, $m)) {
+        $caller = require_admin($db);
+        $userId = (int)$m[1];
+        $body = read_json_body();
+
+        if (!array_key_exists('is_admin', $body)) {
+            json_response(400, ['success' => false, 'error' => 'is_admin مطلوب']);
+        }
+        $newFlag = $body['is_admin'] ? 1 : 0;
+
+        // Make sure the target exists
+        $stmt = $db->prepare('SELECT id, name, is_admin FROM users WHERE id = ? LIMIT 1');
+        $stmt->bindValue(1, $userId, SQLITE3_INTEGER);
+        $target = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        if (!$target) json_response(404, ['success' => false, 'error' => 'المستخدم غير موجود']);
+
+        // Safety: don't allow the caller to demote themselves
+        // (so we always have at least one signed-in admin able to recover)
+        if ($newFlag === 0 && (int)$target['id'] === (int)$caller['id']) {
+            json_response(400, [
+                'success' => false,
+                'error'   => 'لا يمكنك إلغاء صلاحياتك الإدارية عن نفسك. اطلب من مدير آخر القيام بذلك.',
+            ]);
+        }
+
+        // Safety: don't allow demoting the LAST admin
+        if ($newFlag === 0 && (int)$target['is_admin'] === 1) {
+            $adminCount = (int)$db->querySingle('SELECT COUNT(*) FROM users WHERE is_admin = 1');
+            if ($adminCount <= 1) {
+                json_response(400, [
+                    'success' => false,
+                    'error'   => 'لا يمكن إلغاء صلاحيات آخر مدير في النظام.',
+                ]);
+            }
+        }
+
+        $upd = $db->prepare('UPDATE users SET is_admin = ? WHERE id = ?');
+        $upd->bindValue(1, $newFlag, SQLITE3_INTEGER);
+        $upd->bindValue(2, $userId, SQLITE3_INTEGER);
+        $upd->execute();
+
+        json_response(200, [
+            'success'  => true,
+            'user'     => [
+                'id'       => (int)$target['id'],
+                'name'     => $target['name'],
+                'is_admin' => $newFlag === 1,
+            ],
+            'message'  => $newFlag === 1 ? 'تمت ترقية المستخدم لمدير' : 'تم إلغاء صلاحيات الإدارة',
+        ]);
     }
 
     // DELETE /api/admin/bookings/{id} — hard delete

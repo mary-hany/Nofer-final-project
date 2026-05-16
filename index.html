@@ -505,7 +505,19 @@
         </div>
     </div>
 
-    <script src="script.js" defer></script>
+    <!-- ========================================================
+         تحميل الـ JavaScript على 4 أجزاء بالترتيب (مهم جداً):
+           1) notify_auth      : نظام الإشعارات + بيانات أولية + auth client.
+           2) modals_render    : مودالز الدخول/التسجيل + رندر الأطباء والعيادات.
+           3) booking_profile  : مودال الحجز + ملف الطبيب + التقييمات.
+           4) reminders_init   : التذكيرات + صفحة حجوزاتي + تشغيل التطبيق.
+         defer بيخلي المتصفح يستنى لحد ما الـ HTML يخلص قبل ما يبدأ
+         تنفيذ السكربتات، ويحافظ على الترتيب بينهم.
+    ========================================================= -->
+    <script src="script_1_notify_auth.js" defer></script>
+    <script src="script_2_modals_render.js" defer></script>
+    <script src="script_3_booking_profile.js" defer></script>
+    <script src="script_4_reminders_init.js" defer></script>
     <script src="script_doctors.js" defer></script>
 </body>
 
